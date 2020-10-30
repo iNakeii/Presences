@@ -4,20 +4,21 @@ const presence = new Presence({
 
 const currentURL = new URL(document.location.href),
     currentPath = currentURL.pathname.replace(/^\/|\/$/g, "").split("/"),
+    currentURLString = currentURL.toString(),
+    currentPATHString = currentPath.toString(),
     browsingStamp = Math.floor(Date.now() / 1000);
 
 let tresc = '',
+    state = '',
     logo = 'lg_portal';
 
 presence.on("UpdateData", async () => {
 
-    const currentURLString = currentURL.toString(),
-        currentPATHString = currentPath.toString();
-
-    if(currentURLString.startsWith('https://portal.librus.pl/rodzina')) {
+    if(currentURLString.startsWith('https://portal.librus.pl/')) {
         logo = 'lg_portal';
+        if(currentPATHString.includes('rodzina')) state = "Portal Rodzina"; else if(currentPATHString.includes('szkola')) state = "Portal Szkoła";
         if(currentPATHString.endsWith('synergia,loguj')) tresc = 'Loguje się do e-dziennika'; else 
-        if(currentURLString == 'https://portal.librus.pl/rodzina') tresc = 'Przegląda stronę główną'; else { 
+        if(currentURLString == 'https://portal.librus.pl/rodzina' || currentURLString == 'https://portal.librus.pl/szkola') tresc = 'Przegląda stronę główną'; else { 
             if (document.readyState === 'complete') {
                 const h1title = document.getElementsByClassName('content__title')[0].textContent;
                 tresc = 'Czyta artykuł: '+h1title;
@@ -25,6 +26,7 @@ presence.on("UpdateData", async () => {
         }
     } else if(currentURLString.startsWith('https://synergia.librus.pl')) {
         logo = 'lg_synergia';
+        state = "Librus Synergia";
         if(currentPATHString.endsWith('uczen,index')) tresc = 'Jest na stronie głownej'; else 
         if(currentPATHString.endsWith('przegladaj_oceny,uczen')) tresc = 'Sprawdza oceny'; else 
         if(currentPATHString.endsWith('przegladaj_nb,uczen')) tresc = 'Sprawdza frekwencje'; else
@@ -50,11 +52,13 @@ presence.on("UpdateData", async () => {
         tresc = "Przegląda nieobsługiwaną stronę";
     }
 
-    const presenceData: PresenceData = {
+    let presenceData: PresenceData = {
         details: tresc,
         largeImageKey: logo,
         startTimestamp: browsingStamp
-      };
+    };
+
+    if(state != '') presenceData.state = state;
 
     if (presenceData.details == null) {
         presence.setTrayTitle(); 
